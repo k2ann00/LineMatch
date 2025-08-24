@@ -4,13 +4,14 @@ using UnityEngine;
 public class GridManager : MonoBehaviour
 {
     [Header("Grid Settings")]
-    public int gridSizeX = 5;
-    public int gridSizeY= 5;
     public float spacing = 1.0f;
     public GameObject dotPrefab;
     public GameObject horizontalLinePrefab;
     public GameObject verticalLinePrefab;
     public GameManager gameManager;
+
+    private int gridSizeX;
+    private int gridSizeY;
 
     private Dot[,] dots;
     private Dot selectedDot;
@@ -18,19 +19,24 @@ public class GridManager : MonoBehaviour
 
     void Start()
     {
+        // SetupManager'dan değerleri al
+        gridSizeX = SetupManager.Instance.gridX;
+        gridSizeY = SetupManager.Instance.gridY;
+
         GenerateGrid();
     }
 
     void GenerateGrid()
     {
         dots = new Dot[gridSizeX, gridSizeY];
-        float offset = (gridSizeX - 1) * spacing * 0.5f;
+        float offsetX = (gridSizeX - 1) * spacing * 0.5f;
+        float offsetY = (gridSizeY - 1) * spacing * 0.5f;
 
         for (int y = 0; y < gridSizeY; y++)
         {
             for (int x = 0; x < gridSizeX; x++)
             {
-                Vector3 dotPos = new Vector3(x * spacing - offset, y * spacing - offset, 0);
+                Vector3 dotPos = new Vector3(x * spacing - offsetX, y * spacing - offsetY, 0);
                 GameObject dotObj = Instantiate(dotPrefab, dotPos, Quaternion.identity, transform);
 
                 Dot dot = dotObj.GetComponent<Dot>();
@@ -47,7 +53,6 @@ public class GridManager : MonoBehaviour
 
     public void DotSelected(Dot dot)
     {
-        // Eğer seçili dot varsa ve tıklanan dot neighbor ise → çizgi oluştur
         if (selectedDot != null && neighborDots.Contains(dot))
         {
             DrawLine(selectedDot, dot);
@@ -55,9 +60,7 @@ public class GridManager : MonoBehaviour
             return;
         }
 
-        // Normal seçim: önceki highlight’ları resetle
         ResetSelection();
-
         selectedDot = dot;
         selectedDot.SetSelected(true);
         HighlightNeighbors(dot);
@@ -66,47 +69,19 @@ public class GridManager : MonoBehaviour
     private void HighlightNeighbors(Dot dot)
     {
         neighborDots.Clear();
-
         int x = dot.x;
         int y = dot.y;
 
-        // Yukarı
-        if (y + 1 < gridSizeY)
-        {
-            neighborDots.Add(dots[x, y + 1]);
-            dots[x, y + 1].SetHighlight(true);
-        }
-
-        // Aşağı
-        if (y - 1 >= 0)
-        {
-            neighborDots.Add(dots[x, y - 1]);
-            dots[x, y - 1].SetHighlight(true);
-        }
-
-        // Sağ
-        if (x + 1 < gridSizeX)
-        {
-            neighborDots.Add(dots[x + 1, y]);
-            dots[x + 1, y].SetHighlight(true);
-        }
-
-        // Sol
-        if (x - 1 >= 0)
-        {
-            neighborDots.Add(dots[x - 1, y]);
-            dots[x - 1, y].SetHighlight(true);
-        }
+        if (y + 1 < gridSizeY) { neighborDots.Add(dots[x, y + 1]); dots[x, y + 1].SetHighlight(true); }
+        if (y - 1 >= 0) { neighborDots.Add(dots[x, y - 1]); dots[x, y - 1].SetHighlight(true); }
+        if (x + 1 < gridSizeX) { neighborDots.Add(dots[x + 1, y]); dots[x + 1, y].SetHighlight(true); }
+        if (x - 1 >= 0) { neighborDots.Add(dots[x - 1, y]); dots[x - 1, y].SetHighlight(true); }
     }
 
     private void ResetSelection()
     {
-        if (selectedDot != null)
-            selectedDot.SetSelected(false);
-
-        foreach (Dot d in neighborDots)
-            d.SetHighlight(false);
-
+        if (selectedDot != null) selectedDot.SetSelected(false);
+        foreach (Dot d in neighborDots) d.SetHighlight(false);
         neighborDots.Clear();
         selectedDot = null;
     }
@@ -114,55 +89,28 @@ public class GridManager : MonoBehaviour
     private void DrawLine(Dot a, Dot b)
     {
         if (!gameManager.CanDrawLine()) return;
+
         Vector3 pos = (a.transform.position + b.transform.position) / 2f;
-
-        Quaternion rotation = Quaternion.identity;
-
-
         GameObject line;
-
-
-
 
         if (a.x == b.x) // Dikey çizgi
         {
-            line = Instantiate(verticalLinePrefab, pos, rotation, transform);
-            Debug.Log("Dikey Çizgi");
+            line = Instantiate(verticalLinePrefab, pos, Quaternion.identity, transform);
             line.transform.localScale = new Vector3(0.1f, spacing, 1);
-            line.transform.rotation = rotation; // veya 90 dereceye çevirme, prefab modeline göre
-            if (a.y < b.y)
-            {
-                a.UpLineActive = true;
-                b.DownLineActive = true;
-            }
-            else
-            {
-                a.DownLineActive = true;
-                b.UpLineActive = true;
-            }
+            if (a.y < b.y) { a.UpLineActive = true; b.DownLineActive = true; }
+            else { a.DownLineActive = true; b.UpLineActive = true; }
         }
         else if (a.y == b.y) // Yatay çizgi
         {
-            Debug.Log("Yatay Çizgi");
-            line = Instantiate(horizontalLinePrefab, pos, rotation, transform);
+            line = Instantiate(horizontalLinePrefab, pos, Quaternion.identity, transform);
             line.transform.localScale = new Vector3(spacing, 0.1f, 1);
-            line.transform.rotation = rotation; // yatay prefab için default
-            if (a.x < b.x)
-            {
-                a.RightLineActive = true;
-                b.LeftLineActive = true;
-            }
-            else
-            {
-                a.LeftLineActive = true;
-                b.RightLineActive = true;
-            }
+            if (a.x < b.x) { a.RightLineActive = true; b.LeftLineActive = true; }
+            else { a.LeftLineActive = true; b.RightLineActive = true; }
         }
+
         gameManager.LineDrawn();
         CheckForSquares();
     }
-
-
 
     private void CheckForSquares()
     {
@@ -170,10 +118,10 @@ public class GridManager : MonoBehaviour
         {
             for (int x = 0; x < gridSizeX - 1; x++)
             {
-                Dot A = dots[x, y];       // üst sol
-                Dot B = dots[x + 1, y];   // üst sağ
-                Dot C = dots[x, y - 1];   // alt sol
-                Dot D = dots[x + 1, y - 1]; // alt sağ
+                Dot A = dots[x, y];
+                Dot B = dots[x + 1, y];
+                Dot C = dots[x, y - 1];
+                Dot D = dots[x + 1, y - 1];
 
                 bool top = A.RightLineActive && B.LeftLineActive;
                 bool bottom = C.RightLineActive && D.LeftLineActive;
@@ -183,18 +131,13 @@ public class GridManager : MonoBehaviour
                 if (top && bottom && left && right)
                 {
                     CreateSquareVisual(x, y - 1);
-                    // Burada GameManager’a puan eklemeyi de çağırabilirsin
-                    // gameManager.AddScore(gameManager.currentPlayer);
                 }
             }
         }
     }
 
-
-
     private void CreateSquareVisual(int x, int y)
     {
-        // Kare prefab varsa instantiate edebilirsin, yoksa bir Quad oluştur
         Vector3 pos = (dots[x, y].transform.position + dots[x + 1, y + 1].transform.position) / 2f;
         GameObject square = GameObject.CreatePrimitive(PrimitiveType.Quad);
         square.transform.position = pos;
@@ -202,5 +145,4 @@ public class GridManager : MonoBehaviour
         square.GetComponent<Renderer>().material.color = Color.green;
         square.transform.SetParent(transform);
     }
-
 }

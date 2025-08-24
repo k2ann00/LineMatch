@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,60 +8,104 @@ public class GameManager : MonoBehaviour
     [Header("UI Elements")]
     public Button rollDiceButton;
     public TextMeshProUGUI diceResultText;
-    public TextMeshProUGUI remainingLinesText;
+    public GameObject playerPanelPrefab;
+    public Transform canvasTransform;
 
-    public int currentPlayer = 1; // 1 veya 2
-    private int remainingLines = 0;
+    public Transform[] playerPanelPositions;
 
+    [Header("Gameplay")]
+    public int playerCount = 2; // SetupManager'dan al
+    private List<Player> players = new List<Player>();
+    private int currentPlayerIndex = 0;
 
     void Start()
     {
+        SetupPlayers();
+        UpdateCurrentPlayerUI();
+
         rollDiceButton.onClick.AddListener(RollDice);
-        UpdateUI();
         rollDiceButton.interactable = true;
     }
 
+    void SetupPlayers()
+    {
+        for (int i = 0; i < playerCount; i++)
+        {
+            Player player = new Player();
+            player.id = i + 1;
+            player.name = "Oyuncu " + player.id;
+
+            // Panel oluþtur, parent olarak Canvas yerine placeholder kullan
+            Transform slot = playerPanelPositions[i]; // Placeholder
+            RectTransform rect = slot.GetComponent<RectTransform>();
+            player.panel = Instantiate(playerPanelPrefab, slot.position, Quaternion.identity, rect);
+
+            // UI referanslarýný al
+            player.nameText = player.panel.transform.Find("Player_Name").GetComponent<TextMeshProUGUI>();
+            player.scoreText = player.panel.transform.Find("Score").GetComponent<TextMeshProUGUI>();
+            player.lineText = player.panel.transform.Find("Remaning_Lines").GetComponent<TextMeshProUGUI>();
+            player.glow = player.panel.transform.Find("Glow").gameObject;
+
+            // Deðerleri ata
+            player.nameText.text = player.name;
+            player.scoreText.text = "0";
+            player.lineText.text = "0";
+            player.glow.SetActive(false);
+
+            // Paneli placeholder pozisyonuna hizala
+            RectTransform rt = player.panel.GetComponent<RectTransform>();
+            rt.anchoredPosition = Vector2.zero; // parent placeholder'ýn pozisyonuna göre sýfýrla
+
+            players.Add(player);
+        }
+    }
+
+
     private void RollDice()
     {
-        int dice = Random.Range(1, 7); // 1–6 arasý
-        remainingLines = dice;
-        diceResultText.text = "Zar: " + dice;
-        UpdateUI();
+        Player current = players[currentPlayerIndex];
+        int dice = Random.Range(1, 7);
+        current.remainingLines = dice;
 
-        // Zar atýldý -> tekrar basýlmamalý
+        current.lineText.text = dice.ToString();
+        diceResultText.text = current.name + " Zar: " + dice;
+
         rollDiceButton.interactable = false;
     }
 
     public bool CanDrawLine()
     {
-        return remainingLines > 0;
+        return players[currentPlayerIndex].remainingLines > 0;
     }
 
     public void LineDrawn()
     {
-        if (remainingLines > 0)
-        {
-            remainingLines--;
-            UpdateUI();
+        Player current = players[currentPlayerIndex];
 
-            // Ancak tüm çizgiler bitince tekrar zar atýlabilir
-            if (remainingLines <= 0)
-            {
-                rollDiceButton.interactable = true;
-            }
+        if (current.remainingLines > 0)
+        {
+            current.remainingLines--;
+            current.lineText.text = current.remainingLines.ToString();
+
+            if (current.remainingLines <= 0)
+                NextPlayerTurn();
         }
     }
 
-    private void UpdateUI()
+    void NextPlayerTurn()
     {
-        remainingLinesText.text = "Kalan Çizgi: " + remainingLines;
+        players[currentPlayerIndex].glow.SetActive(false);
+
+        currentPlayerIndex = (currentPlayerIndex + 1) % playerCount;
+
+        UpdateCurrentPlayerUI();
+        rollDiceButton.interactable = true;
     }
 
-    private void SwitchPlayer()
+    void UpdateCurrentPlayerUI()
     {
-        currentPlayer = (currentPlayer == 1) ? 2 : 1;
-        // Burada otomatik zar attýrmak istemiyorsan RollDice() çaðýrma
-        rollDiceButton.interactable = true;
-        diceResultText.text = "Oyuncu " + currentPlayer + " sýrasý!";
+        Player current = players[currentPlayerIndex];
+        current.glow.SetActive(true);
+        diceResultText.text = current.name + " sýrasý!";
     }
 }

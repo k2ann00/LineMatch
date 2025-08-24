@@ -18,6 +18,8 @@ public class SetupManager : MonoBehaviour
     public TextMeshProUGUI textPlayerCount;
     public Button buttonIncreasePlayer;
     public Button buttonDecreasePlayer;
+    public Transform[] playerPanelPositions; // Sahnede yerleþtirilmiþ boþ objeler (max 4)
+
 
     [Header("Start Button")]
     public Button startButton;
@@ -25,9 +27,9 @@ public class SetupManager : MonoBehaviour
     [Header("Game Scene Name")]
     public string gameSceneName = "GameScene";
 
-    private int gridX = 5;
-    private int gridY = 5;
-    private int playerCount = 2;
+    public int gridX = 5;
+    public int gridY = 5;
+    public int playerCount = 2;
 
     private const int minGrid = 4;
     private const int maxGrid = 16;
