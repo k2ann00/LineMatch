@@ -4,7 +4,8 @@ using UnityEngine;
 public class GridManager : MonoBehaviour
 {
     [Header("Grid Settings")]
-    public int gridSize = 5;
+    public int gridSizeX = 5;
+    public int gridSizeY= 5;
     public float spacing = 1.0f;
     public GameObject dotPrefab;
     public GameObject horizontalLinePrefab;
@@ -18,17 +19,16 @@ public class GridManager : MonoBehaviour
     void Start()
     {
         GenerateGrid();
-        
     }
 
     void GenerateGrid()
     {
-        dots = new Dot[gridSize, gridSize];
-        float offset = (gridSize - 1) * spacing * 0.5f;
+        dots = new Dot[gridSizeX, gridSizeY];
+        float offset = (gridSizeX - 1) * spacing * 0.5f;
 
-        for (int y = 0; y < gridSize; y++)
+        for (int y = 0; y < gridSizeY; y++)
         {
-            for (int x = 0; x < gridSize; x++)
+            for (int x = 0; x < gridSizeX; x++)
             {
                 Vector3 dotPos = new Vector3(x * spacing - offset, y * spacing - offset, 0);
                 GameObject dotObj = Instantiate(dotPrefab, dotPos, Quaternion.identity, transform);
@@ -36,7 +36,7 @@ public class GridManager : MonoBehaviour
                 Dot dot = dotObj.GetComponent<Dot>();
 
                 int id = 0;
-                if (y == gridSize - 1 || y == 0 || x == 0 || x == gridSize - 1)
+                if (y == gridSizeY - 1 || y == 0 || x == 0 || x == gridSizeX - 1)
                     id = 1;
 
                 dot.Init(x, y, id, this);
@@ -71,7 +71,7 @@ public class GridManager : MonoBehaviour
         int y = dot.y;
 
         // Yukarı
-        if (y + 1 < gridSize)
+        if (y + 1 < gridSizeY)
         {
             neighborDots.Add(dots[x, y + 1]);
             dots[x, y + 1].SetHighlight(true);
@@ -85,7 +85,7 @@ public class GridManager : MonoBehaviour
         }
 
         // Sağ
-        if (x + 1 < gridSize)
+        if (x + 1 < gridSizeX)
         {
             neighborDots.Add(dots[x + 1, y]);
             dots[x + 1, y].SetHighlight(true);
@@ -113,6 +113,7 @@ public class GridManager : MonoBehaviour
 
     private void DrawLine(Dot a, Dot b)
     {
+        if (!gameManager.CanDrawLine()) return;
         Vector3 pos = (a.transform.position + b.transform.position) / 2f;
 
         Quaternion rotation = Quaternion.identity;
@@ -121,13 +122,11 @@ public class GridManager : MonoBehaviour
         GameObject line;
 
 
-        gameManager.LineDrawn();
 
-        if (!gameManager.CanDrawLine()) return;
 
         if (a.x == b.x) // Dikey çizgi
         {
-            line = Instantiate(horizontalLinePrefab, pos, rotation, transform);
+            line = Instantiate(verticalLinePrefab, pos, rotation, transform);
             Debug.Log("Dikey Çizgi");
             line.transform.localScale = new Vector3(0.1f, spacing, 1);
             line.transform.rotation = rotation; // veya 90 dereceye çevirme, prefab modeline göre
@@ -145,7 +144,7 @@ public class GridManager : MonoBehaviour
         else if (a.y == b.y) // Yatay çizgi
         {
             Debug.Log("Yatay Çizgi");
-            line = Instantiate(verticalLinePrefab, pos, rotation, transform);
+            line = Instantiate(horizontalLinePrefab, pos, rotation, transform);
             line.transform.localScale = new Vector3(spacing, 0.1f, 1);
             line.transform.rotation = rotation; // yatay prefab için default
             if (a.x < b.x)
@@ -159,6 +158,7 @@ public class GridManager : MonoBehaviour
                 b.RightLineActive = true;
             }
         }
+        gameManager.LineDrawn();
         CheckForSquares();
     }
 
@@ -166,9 +166,9 @@ public class GridManager : MonoBehaviour
 
     private void CheckForSquares()
     {
-        for (int y = 1; y < gridSize; y++)
+        for (int y = 1; y < gridSizeY; y++)
         {
-            for (int x = 0; x < gridSize - 1; x++)
+            for (int x = 0; x < gridSizeX - 1; x++)
             {
                 Dot A = dots[x, y];       // üst sol
                 Dot B = dots[x + 1, y];   // üst sağ

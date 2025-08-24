@@ -103,6 +103,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   x: 0
   y: 0
+  id: 0
+  UpLineActive: 0
+  DownLineActive: 0
+  LeftLineActive: 0
+  RightLineActive: 0
 --- !u!58 &6472070897494321263
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -138,4 +143,4 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 0.5
+  m_Radius: 1.3
