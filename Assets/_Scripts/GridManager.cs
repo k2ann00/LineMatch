@@ -16,10 +16,11 @@ public class GridManager : MonoBehaviour
     private Dot[,] dots;
     private Dot selectedDot;
     private List<Dot> neighborDots = new List<Dot>();
+    private HashSet<Vector2Int> completedSquares = new HashSet<Vector2Int>();
+
 
     void Start()
     {
-        // SetupManager'dan değerleri al
         gridSizeX = SetupManager.Instance.gridX;
         gridSizeY = SetupManager.Instance.gridY;
 
@@ -108,7 +109,9 @@ public class GridManager : MonoBehaviour
             else { a.LeftLineActive = true; b.RightLineActive = true; }
         }
 
+        Debug.Log($"LineDrawn -> ({a.x},{a.y}) <-> ({b.x},{b.y})");
         gameManager.LineDrawn();
+
         CheckForSquares();
     }
 
@@ -130,19 +133,38 @@ public class GridManager : MonoBehaviour
 
                 if (top && bottom && left && right)
                 {
-                    CreateSquareVisual(x, y - 1);
+                    Vector2Int squareCoord = new Vector2Int(x, y - 1);
+
+                    // ✅ Eğer bu kare daha önce oluştuysa tekrar skor ekleme!
+                    if (completedSquares.Contains(squareCoord))
+                        continue;
+
+                    completedSquares.Add(squareCoord);
+
+                    // Şu anki oyuncuyu GameManager'dan öğreniyoruz
+                    Player currentPlayer = gameManager.GetCurrentPlayer();
+
+                    Debug.Log($"✅ Yeni Kare! Koordinatlar: {squareCoord} - Oyuncu: {currentPlayer.name}");
+
+                    // Player parametresini gönderiyoruz
+                    CreateSquareVisual(x, y - 1, currentPlayer);
                 }
             }
         }
     }
 
-    private void CreateSquareVisual(int x, int y)
+    private void CreateSquareVisual(int x, int y, Player player)
     {
         Vector3 pos = (dots[x, y].transform.position + dots[x + 1, y + 1].transform.position) / 2f;
         GameObject square = GameObject.CreatePrimitive(PrimitiveType.Quad);
         square.transform.position = pos;
         square.transform.localScale = new Vector3(spacing, spacing, 1);
-        square.GetComponent<Renderer>().material.color = Color.green;
         square.transform.SetParent(transform);
+
+        square.GetComponent<Renderer>().material.color = player.color;
+
+        Debug.Log($"🎯 Skor eklendi -> Oyuncu: {player.name}, Önceki Skor: {player.score}");
+        gameManager.AddScore(player, 1);
+        Debug.Log($"📊 Yeni Skor -> Oyuncu: {player.name}, Skor: {player.score}");
     }
 }

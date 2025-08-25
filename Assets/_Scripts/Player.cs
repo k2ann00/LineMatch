@@ -9,6 +9,7 @@ public class Player
     public int score;
     public int remainingLines;
 
+    public Color color;
     public GameObject panel;           // Panel prefab instance
     public TextMeshProUGUI nameText;   // Player_Name
     public TextMeshProUGUI scoreText;  // Score

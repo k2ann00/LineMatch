@@ -12,6 +12,7 @@ public class GameManager : MonoBehaviour
     public Transform canvasTransform;
 
     public Transform[] playerPanelPositions;
+    private Color[] playerColors = new Color[] { Color.red, Color.blue, Color.green, Color.yellow };
 
     [Header("Gameplay")]
     public int playerCount = 2; // SetupManager'dan al
@@ -34,11 +35,18 @@ public class GameManager : MonoBehaviour
             Player player = new Player();
             player.id = i + 1;
             player.name = "Oyuncu " + player.id;
+            player.color = playerColors[i % playerColors.Length];
 
-            // Panel oluþtur, parent olarak Canvas yerine placeholder kullan
-            Transform slot = playerPanelPositions[i]; // Placeholder
-            RectTransform rect = slot.GetComponent<RectTransform>();
-            player.panel = Instantiate(playerPanelPrefab, slot.position, Quaternion.identity, rect);
+            Transform slot = playerPanelPositions[i]; // Placeholder (önceden sahneye koyduðun dikdörtgenler)
+
+            // Panel oluþtur ve slot'u parent yap
+            player.panel = Instantiate(playerPanelPrefab, slot);
+
+            // Local transform deðerlerini sýfýrla ki slot’un konum + rotasyonunu aynen alsýn
+            RectTransform rt = player.panel.GetComponent<RectTransform>();
+            rt.localPosition = Vector3.zero;
+            rt.localRotation = Quaternion.identity;
+            rt.localScale = Vector3.one;
 
             // UI referanslarýný al
             player.nameText = player.panel.transform.Find("Player_Name").GetComponent<TextMeshProUGUI>();
@@ -52,13 +60,10 @@ public class GameManager : MonoBehaviour
             player.lineText.text = "0";
             player.glow.SetActive(false);
 
-            // Paneli placeholder pozisyonuna hizala
-            RectTransform rt = player.panel.GetComponent<RectTransform>();
-            rt.anchoredPosition = Vector2.zero; // parent placeholder'ýn pozisyonuna göre sýfýrla
-
             players.Add(player);
         }
     }
+
 
 
     private void RollDice()
@@ -71,6 +76,11 @@ public class GameManager : MonoBehaviour
         diceResultText.text = current.name + " Zar: " + dice;
 
         rollDiceButton.interactable = false;
+    }
+
+    public Player GetCurrentPlayer()
+    {
+        return players[currentPlayerIndex];
     }
 
     public bool CanDrawLine()
@@ -86,6 +96,8 @@ public class GameManager : MonoBehaviour
         {
             current.remainingLines--;
             current.lineText.text = current.remainingLines.ToString();
+
+
 
             if (current.remainingLines <= 0)
                 NextPlayerTurn();
@@ -108,4 +120,20 @@ public class GameManager : MonoBehaviour
         current.glow.SetActive(true);
         diceResultText.text = current.name + " sýrasý!";
     }
+
+
+    public void AddScore(Player player, int amount)
+    {
+        // Skoru artýr
+        player.score += amount;
+
+        // UI güncelle
+        player.scoreText.text = player.score.ToString();
+
+        // Burada ileride þunlarý da yapacaðýz:
+        // - SFX oynat
+        // - Efekt/animasyon göster
+        // - Kare oluþturma sistemi çaðýr
+    }
+
 }
