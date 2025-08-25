@@ -18,7 +18,6 @@ public class GridManager : MonoBehaviour
     private List<Dot> neighborDots = new List<Dot>();
     private HashSet<Vector2Int> completedSquares = new HashSet<Vector2Int>();
 
-
     void Start()
     {
         gridSizeX = SetupManager.Instance.gridX;
@@ -41,12 +40,7 @@ public class GridManager : MonoBehaviour
                 GameObject dotObj = Instantiate(dotPrefab, dotPos, Quaternion.identity, transform);
 
                 Dot dot = dotObj.GetComponent<Dot>();
-
-                int id = 0;
-                if (y == gridSizeY - 1 || y == 0 || x == 0 || x == gridSizeX - 1)
-                    id = 1;
-
-                dot.Init(x, y, id, this);
+                dot.Init(x, y, 0, this); // id 0 standart, sınır için farklı verilebilir
                 dots[x, y] = dot;
             }
         }
@@ -110,12 +104,16 @@ public class GridManager : MonoBehaviour
         }
 
         Debug.Log($"LineDrawn -> ({a.x},{a.y}) <-> ({b.x},{b.y})");
-        gameManager.LineDrawn();
 
-        CheckForSquares();
+        // Kare kontrolü: çizgiyi çeken oyuncuyu gönderiyoruz
+        Player currentPlayer = gameManager.GetCurrentPlayer();
+        CheckForSquares(currentPlayer);
+
+        // Çizgi hakkını azalt
+        gameManager.LineDrawn();
     }
 
-    private void CheckForSquares()
+    private void CheckForSquares(Player player)
     {
         for (int y = 1; y < gridSizeY; y++)
         {
@@ -135,19 +133,13 @@ public class GridManager : MonoBehaviour
                 {
                     Vector2Int squareCoord = new Vector2Int(x, y - 1);
 
-                    // ✅ Eğer bu kare daha önce oluştuysa tekrar skor ekleme!
                     if (completedSquares.Contains(squareCoord))
                         continue;
 
                     completedSquares.Add(squareCoord);
 
-                    // Şu anki oyuncuyu GameManager'dan öğreniyoruz
-                    Player currentPlayer = gameManager.GetCurrentPlayer();
-
-                    Debug.Log($"✅ Yeni Kare! Koordinatlar: {squareCoord} - Oyuncu: {currentPlayer.name}");
-
-                    // Player parametresini gönderiyoruz
-                    CreateSquareVisual(x, y - 1, currentPlayer);
+                    Debug.Log($"✅ Yeni Kare! Koordinatlar: {squareCoord} - Oyuncu: {player.name}");
+                    CreateSquareVisual(x, y - 1, player);
                 }
             }
         }
@@ -160,7 +152,6 @@ public class GridManager : MonoBehaviour
         square.transform.position = pos;
         square.transform.localScale = new Vector3(spacing, spacing, 1);
         square.transform.SetParent(transform);
-
         square.GetComponent<Renderer>().material.color = player.color;
 
         Debug.Log($"🎯 Skor eklendi -> Oyuncu: {player.name}, Önceki Skor: {player.score}");

@@ -405,12 +405,12 @@ MonoBehaviour:
   rollDiceButton: {fileID: 1099949327}
   diceResultText: {fileID: 1238327593}
   playerPanelPrefab: {fileID: 8116267214915675556, guid: 5819e1b23a0ca5e42b3275bfc888ff39, type: 3}
-  canvasTransform: {fileID: 1763440303}
   playerPanelPositions:
   - {fileID: 333822108}
   - {fileID: 801606636}
   - {fileID: 1849536659}
   - {fileID: 1882056332}
+  canvasTransform: {fileID: 1763440303}
   playerCount: 2
 --- !u!4 &314949905
 Transform:

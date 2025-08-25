@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,18 +10,22 @@ public class GameManager : MonoBehaviour
     public Button rollDiceButton;
     public TextMeshProUGUI diceResultText;
     public GameObject playerPanelPrefab;
+    public Transform[] playerPanelPositions;
     public Transform canvasTransform;
 
-    public Transform[] playerPanelPositions;
     private Color[] playerColors = new Color[] { Color.red, Color.blue, Color.green, Color.yellow };
-
-    [Header("Gameplay")]
-    public int playerCount = 2; // SetupManager'dan al
     private List<Player> players = new List<Player>();
     private int currentPlayerIndex = 0;
 
+    [Header("Gameplay")]
+    public int playerCount = 2;
+
     void Start()
     {
+        if (canvasTransform == null)
+            canvasTransform = GameObject.Find("Canvas").transform;
+
+        playerCount = SetupManager.Instance.playerCount;
         SetupPlayers();
         UpdateCurrentPlayerUI();
 
@@ -30,6 +35,11 @@ public class GameManager : MonoBehaviour
 
     void SetupPlayers()
     {
+        players.Clear();
+
+        // Player sayýsýný max 4 ile sýnýrla
+        playerCount = Mathf.Clamp(playerCount, 2, 4);
+
         for (int i = 0; i < playerCount; i++)
         {
             Player player = new Player();
@@ -37,18 +47,26 @@ public class GameManager : MonoBehaviour
             player.name = "Oyuncu " + player.id;
             player.color = playerColors[i % playerColors.Length];
 
-            Transform slot = playerPanelPositions[i]; // Placeholder (önceden sahneye koyduðun dikdörtgenler)
+            // Panel slot kontrolü
+            if (i >= playerPanelPositions.Length)
+            {
+                Debug.LogWarning($"Player slot yok! index: {i}, panelPositions.Length: {playerPanelPositions.Length}. Panel otomatik olarak sahnede oluþturulacak.");
+                GameObject tempSlot = new GameObject("PlayerSlot_" + i, typeof(RectTransform));
+                tempSlot.transform.SetParent(canvasTransform);
+                tempSlot.GetComponent<RectTransform>().anchoredPosition = new Vector2(150 * i, -50); // örnek pozisyon
+                playerPanelPositions = playerPanelPositions.Append(tempSlot.transform).ToArray();
+            }
 
-            // Panel oluþtur ve slot'u parent yap
+            Transform slot = playerPanelPositions[i];
+
+            // Panel oluþtur
             player.panel = Instantiate(playerPanelPrefab, slot);
-
-            // Local transform deðerlerini sýfýrla ki slot’un konum + rotasyonunu aynen alsýn
             RectTransform rt = player.panel.GetComponent<RectTransform>();
             rt.localPosition = Vector3.zero;
             rt.localRotation = Quaternion.identity;
             rt.localScale = Vector3.one;
 
-            // UI referanslarýný al
+            // UI referanslarý al
             player.nameText = player.panel.transform.Find("Player_Name").GetComponent<TextMeshProUGUI>();
             player.scoreText = player.panel.transform.Find("Score").GetComponent<TextMeshProUGUI>();
             player.lineText = player.panel.transform.Find("Remaning_Lines").GetComponent<TextMeshProUGUI>();
@@ -63,8 +81,6 @@ public class GameManager : MonoBehaviour
             players.Add(player);
         }
     }
-
-
 
     private void RollDice()
     {
@@ -91,49 +107,37 @@ public class GameManager : MonoBehaviour
     public void LineDrawn()
     {
         Player current = players[currentPlayerIndex];
+        current.remainingLines--;
+        current.lineText.text = current.remainingLines.ToString();
 
-        if (current.remainingLines > 0)
+        if (current.remainingLines <= 0)
         {
-            current.remainingLines--;
-            current.lineText.text = current.remainingLines.ToString();
-
-
-
-            if (current.remainingLines <= 0)
-                NextPlayerTurn();
+            NextPlayerTurn();
         }
     }
 
     void NextPlayerTurn()
     {
+        if (players.Count == 0) return;
+
         players[currentPlayerIndex].glow.SetActive(false);
-
-        currentPlayerIndex = (currentPlayerIndex + 1) % playerCount;
-
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.Count;
         UpdateCurrentPlayerUI();
         rollDiceButton.interactable = true;
     }
 
     void UpdateCurrentPlayerUI()
     {
+        if (players.Count == 0 || currentPlayerIndex >= players.Count) return;
+
         Player current = players[currentPlayerIndex];
         current.glow.SetActive(true);
         diceResultText.text = current.name + " sýrasý!";
     }
 
-
     public void AddScore(Player player, int amount)
     {
-        // Skoru artýr
         player.score += amount;
-
-        // UI güncelle
         player.scoreText.text = player.score.ToString();
-
-        // Burada ileride þunlarý da yapacaðýz:
-        // - SFX oynat
-        // - Efekt/animasyon göster
-        // - Kare oluþturma sistemi çaðýr
     }
-
 }
