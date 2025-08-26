@@ -667,8 +667,12 @@ MonoBehaviour:
   textPlayerCount: {fileID: 998854049}
   buttonIncreasePlayer: {fileID: 2129829872}
   buttonDecreasePlayer: {fileID: 847226638}
+  playerPanelPositions: []
   startButton: {fileID: 618776737}
   gameSceneName: SinglePlayer_Game_Scene
+  gridX: 5
+  gridY: 5
+  playerCount: 2
 --- !u!4 &374747974
 Transform:
   m_ObjectHideFlags: 0
@@ -2676,8 +2680,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 299.47186, y: 465.5}
-  m_SizeDelta: {x: 598.9436, y: 931}
+  m_AnchoredPosition: {x: 299.47186, y: 540}
+  m_SizeDelta: {x: 598.9436, y: 1080}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1403302594
 MonoBehaviour:
@@ -2785,8 +2789,8 @@ Canvas:
   m_GameObject: {fileID: 1476221728}
   m_Enabled: 1
   serializedVersion: 3
-  m_RenderMode: 0
-  m_Camera: {fileID: 0}
+  m_RenderMode: 1
+  m_Camera: {fileID: 410725291}
   m_PlaneDistance: 100
   m_PixelPerfect: 0
   m_ReceivesEvents: 1
